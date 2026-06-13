@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.barrio.dominio.mantenimiento.EstadoTarea;
 import com.barrio.dominio.mantenimiento.TareaCompuesta;
@@ -28,7 +27,7 @@ public class RepositorioTareas implements Repositorio<TareaDeMantenimiento> {
     }
 
     @Override
-    public Optional<TareaDeMantenimiento> buscarPorId(Long id) {
+    public TareaDeMantenimiento buscarPorId(Long id) {
         String sql = "SELECT * FROM TAREAS WHERE ID = ?";
         Connection conn = null;
         try {
@@ -37,9 +36,9 @@ public class RepositorioTareas implements Repositorio<TareaDeMantenimiento> {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return Optional.of(mapearTarea(rs));
+                        return mapearTarea(rs);
                     }
-                    return Optional.empty();
+                    return null;
                 }
             }
         } catch (SQLException e) {
@@ -184,7 +183,7 @@ public class RepositorioTareas implements Repositorio<TareaDeMantenimiento> {
         } else {
             long provId = rs.getLong("PROVEEDOR_ID");
             Proveedor proveedor = rs.wasNull() ? null
-                    : (Proveedor) repoPersonas.buscarPorId(provId).orElse(null);
+                    : (Proveedor) repoPersonas.buscarPorId(provId);
             tarea = new TareaSimple(proveedor);
         }
 

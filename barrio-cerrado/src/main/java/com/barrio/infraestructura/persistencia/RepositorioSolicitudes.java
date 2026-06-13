@@ -10,7 +10,6 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.barrio.dominio.categorias.CategoriaSolicitud;
 import com.barrio.dominio.categorias.PrioridadSolicitud;
@@ -41,7 +40,7 @@ public class RepositorioSolicitudes implements Repositorio<Solicitud> {
     }
 
     @Override
-    public Optional<Solicitud> buscarPorId(Long id) {
+    public Solicitud buscarPorId(Long id) {
         String sql = "SELECT * FROM SOLICITUDES WHERE ID = ?";
         Connection conn = null;
         try {
@@ -50,9 +49,9 @@ public class RepositorioSolicitudes implements Repositorio<Solicitud> {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return Optional.of(mapearSolicitud(rs));
+                        return mapearSolicitud(rs);
                     }
-                    return Optional.empty();
+                    return null;
                 }
             }
         } catch (SQLException e) {
@@ -200,16 +199,16 @@ public class RepositorioSolicitudes implements Repositorio<Solicitud> {
             case "RECLAMO":
                 long resId = rs.getLong("RESIDENTE_ID");
                 Residente residente = rs.wasNull() ? null
-                        : (Residente) repoPersonas.buscarPorId(resId).orElse(null);
+                        : (Residente) repoPersonas.buscarPorId(resId);
                 long admId = rs.getLong("ADMINISTRADOR_ID");
                 Administrador admin = rs.wasNull() ? null
-                        : (Administrador) repoPersonas.buscarPorId(admId).orElse(null);
+                        : (Administrador) repoPersonas.buscarPorId(admId);
                 solicitud = new Reclamo(residente, admin);
                 break;
             case "INCIDENTE_SEGURIDAD":
                 long guaId = rs.getLong("GUARDIA_ID");
                 Guardia guardia = rs.wasNull() ? null
-                        : (Guardia) repoPersonas.buscarPorId(guaId).orElse(null);
+                        : (Guardia) repoPersonas.buscarPorId(guaId);
                 solicitud = new IncidenteSeguridad(guardia, rs.getBoolean("URGENCIA"));
                 break;
             default:

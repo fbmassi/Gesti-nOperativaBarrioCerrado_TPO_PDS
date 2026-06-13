@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.barrio.aplicacion.trazabilidad.EntradaHistorial;
 import com.barrio.dominio.personas.Persona;
@@ -29,7 +28,7 @@ public class RepositorioHistorial implements Repositorio<EntradaHistorial> {
     }
 
     @Override
-    public Optional<EntradaHistorial> buscarPorId(Long id) {
+    public EntradaHistorial buscarPorId(Long id) {
         String sql = "SELECT * FROM HISTORIAL_ACCIONES WHERE ID = ?";
         Connection conn = null;
         try {
@@ -38,9 +37,9 @@ public class RepositorioHistorial implements Repositorio<EntradaHistorial> {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return Optional.of(mapearEntrada(rs));
+                        return mapearEntrada(rs);
                     }
-                    return Optional.empty();
+                    return null;
                 }
             }
         } catch (SQLException e) {
@@ -140,7 +139,7 @@ public class RepositorioHistorial implements Repositorio<EntradaHistorial> {
     private EntradaHistorial mapearEntrada(ResultSet rs) throws SQLException {
         long autorId = rs.getLong("AUTOR_ID");
         Persona autor = rs.wasNull() ? null
-                : repoPersonas.buscarPorId(autorId).orElse(null);
+                : repoPersonas.buscarPorId(autorId);
 
         Timestamp ts = rs.getTimestamp("FECHA");
 

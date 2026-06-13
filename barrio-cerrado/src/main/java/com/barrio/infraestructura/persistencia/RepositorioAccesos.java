@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.barrio.dominio.acceso.ProtocoloAcceso;
 import com.barrio.dominio.acceso.ProtocoloEmergencia;
@@ -34,7 +33,7 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
     }
 
     @Override
-    public Optional<RegistroAcceso> buscarPorId(Long id) {
+    public RegistroAcceso buscarPorId(Long id) {
         String sql = "SELECT * FROM ACCESOS WHERE ID = ?";
         Connection conn = null;
         try {
@@ -43,9 +42,9 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return Optional.of(mapearAcceso(rs));
+                        return mapearAcceso(rs);
                     }
-                    return Optional.empty();
+                    return null;
                 }
             }
         } catch (SQLException e) {
@@ -151,7 +150,7 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
     private RegistroAcceso mapearAcceso(ResultSet rs) throws SQLException {
         long actorId = rs.getLong("ACTOR_ID");
         Persona actor = rs.wasNull() ? null
-                : repoPersonas.buscarPorId(actorId).orElse(null);
+                : repoPersonas.buscarPorId(actorId);
 
         Timestamp tsIngreso = rs.getTimestamp("FECHA_HORA_INGRESO");
         Timestamp tsEgreso = rs.getTimestamp("FECHA_HORA_EGRESO");

@@ -20,8 +20,16 @@ public abstract class Persona {
     private String apellido;
     private String dni;
     private String email;
+    private String password;
 
     public String getNombreCompleto() {
         return nombre + " " + apellido;
+    }
+
+    /**
+     * Valida la contraseña ingresada contra la almacenada (sin encriptación, solo desarrollo).
+     */
+    public boolean validarPassword(String passwordIngresada) {
+        return this.password != null && this.password.equals(passwordIngresada);
     }
 }

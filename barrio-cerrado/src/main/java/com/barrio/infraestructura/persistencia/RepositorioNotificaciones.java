@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.barrio.dominio.notificaciones.CanalEmail;
 import com.barrio.dominio.notificaciones.CanalSMS;
@@ -32,7 +31,7 @@ public class RepositorioNotificaciones implements Repositorio<Notificacion> {
     }
 
     @Override
-    public Optional<Notificacion> buscarPorId(Long id) {
+    public Notificacion buscarPorId(Long id) {
         String sql = "SELECT * FROM NOTIFICACIONES WHERE ID = ?";
         Connection conn = null;
         try {
@@ -41,9 +40,9 @@ public class RepositorioNotificaciones implements Repositorio<Notificacion> {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return Optional.of(mapearNotificacion(rs));
+                        return mapearNotificacion(rs);
                     }
-                    return Optional.empty();
+                    return null;
                 }
             }
         } catch (SQLException e) {
@@ -147,7 +146,7 @@ public class RepositorioNotificaciones implements Repositorio<Notificacion> {
     private Notificacion mapearNotificacion(ResultSet rs) throws SQLException {
         long destId = rs.getLong("DESTINATARIO_ID");
         Persona destinatario = rs.wasNull() ? null
-                : repoPersonas.buscarPorId(destId).orElse(null);
+                : repoPersonas.buscarPorId(destId);
 
         Timestamp ts = rs.getTimestamp("FECHA_ENVIO");
 

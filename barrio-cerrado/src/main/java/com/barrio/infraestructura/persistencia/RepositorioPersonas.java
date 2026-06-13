@@ -8,7 +8,6 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.barrio.dominio.personas.Administrador;
 import com.barrio.dominio.personas.Guardia;
@@ -30,7 +29,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
     }
 
     @Override
-    public Optional<Persona> buscarPorId(Long id) {
+    public Persona buscarPorId(Long id) {
         String sql = "SELECT * FROM PERSONAS WHERE ID = ?";
         Connection conn = null;
         try {
@@ -39,13 +38,37 @@ public class RepositorioPersonas implements Repositorio<Persona> {
                 ps.setLong(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        return Optional.of(mapearPersona(rs));
+                        return mapearPersona(rs);
                     }
-                    return Optional.empty();
+                    return null;
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error al buscar persona por ID", e);
+        } finally {
+            ConexionH2.liberarConexion(conn);
+        }
+    }
+
+    /**
+     * Busca una persona por su email. Usado para el login. Retorna null si no existe.
+     */
+    public Persona buscarPorEmail(String email) {
+        String sql = "SELECT * FROM PERSONAS WHERE EMAIL = ?";
+        Connection conn = null;
+        try {
+            conn = ConexionH2.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return mapearPersona(rs);
+                    }
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al buscar persona por email", e);
         } finally {
             ConexionH2.liberarConexion(conn);
         }
@@ -90,9 +113,9 @@ public class RepositorioPersonas implements Repositorio<Persona> {
     }
 
     private void insertar(Persona entidad) {
-        String sql = "INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, "
+        String sql = "INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, PASSWORD, "
                 + "NUMERO_LOTE, LEGAJO, ESPECIALIDAD, RESIDENTE_AUTORIZANTE_ID) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Connection conn = null;
         try {
             conn = ConexionH2.getConnection();
@@ -113,7 +136,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
     }
 
     private void actualizar(Persona entidad) {
-        String sql = "UPDATE PERSONAS SET TIPO=?, NOMBRE=?, APELLIDO=?, DNI=?, EMAIL=?, "
+        String sql = "UPDATE PERSONAS SET TIPO=?, NOMBRE=?, APELLIDO=?, DNI=?, EMAIL=?, PASSWORD=?, "
                 + "NUMERO_LOTE=?, LEGAJO=?, ESPECIALIDAD=?, RESIDENTE_AUTORIZANTE_ID=? "
                 + "WHERE ID=?";
         Connection conn = null;
@@ -121,7 +144,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
             conn = ConexionH2.getConnection();
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 setearParametros(ps, entidad);
-                ps.setLong(10, entidad.getId());
+                ps.setLong(11, entidad.getId());
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -137,36 +160,37 @@ public class RepositorioPersonas implements Repositorio<Persona> {
         ps.setString(3, entidad.getApellido());
         ps.setString(4, entidad.getDni());
         ps.setString(5, entidad.getEmail());
+        ps.setString(6, entidad.getPassword());
 
         if (entidad instanceof Residente) {
-            ps.setInt(6, ((Residente) entidad).getNumeroLote());
+            ps.setInt(7, ((Residente) entidad).getNumeroLote());
         } else {
-            ps.setNull(6, Types.INTEGER);
+            ps.setNull(7, Types.INTEGER);
         }
 
         if (entidad instanceof Administrador) {
-            ps.setString(7, ((Administrador) entidad).getLegajo());
+            ps.setString(8, ((Administrador) entidad).getLegajo());
         } else if (entidad instanceof Guardia) {
-            ps.setString(7, ((Guardia) entidad).getLegajo());
+            ps.setString(8, ((Guardia) entidad).getLegajo());
         } else {
-            ps.setNull(7, Types.VARCHAR);
+            ps.setNull(8, Types.VARCHAR);
         }
 
         if (entidad instanceof Proveedor) {
-            ps.setString(8, ((Proveedor) entidad).getEspecialidad());
+            ps.setString(9, ((Proveedor) entidad).getEspecialidad());
         } else {
-            ps.setNull(8, Types.VARCHAR);
+            ps.setNull(9, Types.VARCHAR);
         }
 
         if (entidad instanceof Visitante) {
             Residente autorizante = ((Visitante) entidad).getResidenteAutorizante();
             if (autorizante != null && autorizante.getId() != null) {
-                ps.setLong(9, autorizante.getId());
+                ps.setLong(10, autorizante.getId());
             } else {
-                ps.setNull(9, Types.BIGINT);
+                ps.setNull(10, Types.BIGINT);
             }
         } else {
-            ps.setNull(9, Types.BIGINT);
+            ps.setNull(10, Types.BIGINT);
         }
     }
 
@@ -199,7 +223,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
             case "VISITANTE":
                 long autId = rs.getLong("RESIDENTE_AUTORIZANTE_ID");
                 Residente autorizante = rs.wasNull() ? null
-                        : (Residente) buscarPorId(autId).orElse(null);
+                        : (Residente) buscarPorId(autId);
                 persona = new Visitante(autorizante);
                 break;
             default:
@@ -211,6 +235,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
         persona.setApellido(rs.getString("APELLIDO"));
         persona.setDni(rs.getString("DNI"));
         persona.setEmail(rs.getString("EMAIL"));
+        persona.setPassword(rs.getString("PASSWORD"));
         return persona;
     }
 }

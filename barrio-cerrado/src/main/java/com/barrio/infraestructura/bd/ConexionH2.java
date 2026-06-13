@@ -2,6 +2,7 @@ package com.barrio.infraestructura.bd;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -50,18 +51,14 @@ public final class ConexionH2 {
     private static void crearSchema(Connection conexion) throws SQLException {
         try (Statement st = conexion.createStatement()) {
 
-            st.execute("CREATE TABLE IF NOT EXISTS LOTES ("
-                    + "ID BIGINT AUTO_INCREMENT PRIMARY KEY,"
-                    + "NUMERO INT NOT NULL,"
-                    + "MANZANA VARCHAR(10) NOT NULL)");
-
             st.execute("CREATE TABLE IF NOT EXISTS PERSONAS ("
                     + "ID BIGINT AUTO_INCREMENT PRIMARY KEY,"
                     + "TIPO VARCHAR(30) NOT NULL,"
                     + "NOMBRE VARCHAR(100) NOT NULL,"
                     + "APELLIDO VARCHAR(100) NOT NULL,"
                     + "DNI VARCHAR(15) NOT NULL UNIQUE,"
-                    + "EMAIL VARCHAR(150),"
+                    + "EMAIL VARCHAR(150) UNIQUE,"
+                    + "PASSWORD VARCHAR(100),"
                     + "NUMERO_LOTE INT,"
                     + "LEGAJO VARCHAR(20),"
                     + "ESPECIALIDAD VARCHAR(50),"
@@ -142,6 +139,33 @@ public final class ConexionH2 {
                     + "AUTOR_ID BIGINT NOT NULL,"
                     + "DESCRIPCION VARCHAR(500) NOT NULL,"
                     + "FOREIGN KEY (AUTOR_ID) REFERENCES PERSONAS(ID))");
+
+            insertarUsuariosDePrueba(st);
         }
+    }
+
+    /**
+     * Inserta cuentas de prueba para el login solo si la tabla PERSONAS está vacía.
+     * Contraseñas en texto plano: únicamente para desarrollo.
+     */
+    private static void insertarUsuariosDePrueba(Statement st) throws SQLException {
+        try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM PERSONAS")) {
+            if (rs.next() && rs.getInt(1) > 0) {
+                return;
+            }
+        }
+
+        st.execute("INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, PASSWORD, LEGAJO) "
+                + "VALUES ('ADMINISTRADOR', 'Admin', 'Sistema', '00000000', "
+                + "'admin@barrio.com', 'admin123', 'LEG-ADM-001')");
+        st.execute("INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, PASSWORD, NUMERO_LOTE) "
+                + "VALUES ('RESIDENTE', 'Juan', 'Pérez', '12345678', "
+                + "'residente@barrio.com', 'res123', 101)");
+        st.execute("INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, PASSWORD, LEGAJO) "
+                + "VALUES ('GUARDIA', 'Carlos', 'García', '87654321', "
+                + "'guardia@barrio.com', 'guard123', 'LEG-GUA-001')");
+        st.execute("INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, PASSWORD, ESPECIALIDAD) "
+                + "VALUES ('PROVEEDOR', 'Marco', 'Rodríguez', '11223344', "
+                + "'proveedor@barrio.com', 'prov123', 'Electricidad')");
     }
 }
