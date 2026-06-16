@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.barrio.dominio.personas.Administrador;
+import com.barrio.dominio.personas.EspecialidadProveedor;
 import com.barrio.dominio.personas.Guardia;
 import com.barrio.dominio.personas.Persona;
 import com.barrio.dominio.personas.Proveedor;
@@ -176,8 +177,8 @@ public class RepositorioPersonas implements Repositorio<Persona> {
             ps.setNull(8, Types.VARCHAR);
         }
 
-        if (entidad instanceof Proveedor) {
-            ps.setString(9, ((Proveedor) entidad).getEspecialidad());
+        if (entidad instanceof Proveedor && ((Proveedor) entidad).getEspecialidad() != null) {
+            ps.setString(9, ((Proveedor) entidad).getEspecialidad().name());
         } else {
             ps.setNull(9, Types.VARCHAR);
         }
@@ -218,7 +219,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
                 persona = new Guardia(rs.getString("LEGAJO"));
                 break;
             case "PROVEEDOR":
-                persona = new Proveedor(rs.getString("ESPECIALIDAD"));
+                persona = new Proveedor(EspecialidadProveedor.desde(rs.getString("ESPECIALIDAD")));
                 break;
             case "VISITANTE":
                 long autId = rs.getLong("RESIDENTE_AUTORIZANTE_ID");
