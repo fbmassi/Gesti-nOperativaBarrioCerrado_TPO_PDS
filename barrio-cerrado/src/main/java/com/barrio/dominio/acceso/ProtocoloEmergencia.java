@@ -12,6 +12,7 @@ public class ProtocoloEmergencia implements ProtocoloAcceso {
 
     @Override
     public boolean validar(Persona actor) {
-        return false;
+        // El acceso de emergencia siempre se permite, sin importar el tipo de actor.
+        return true;
     }
 }

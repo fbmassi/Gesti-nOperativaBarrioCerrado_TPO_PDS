@@ -7,6 +7,9 @@ public class ReporteAccesos extends Reporte {
 
     @Override
     public String generar() {
-        return null;
+        return "===== " + getTitulo() + " =====\n"
+                + "Tipo: Accesos\n"
+                + "Generado: " + getFechaGeneracion() + "\n"
+                + (getContenido() != null ? getContenido() : "(sin datos)");
     }
 }
