@@ -63,7 +63,10 @@ public class GestorReportes {
             if (s instanceof Reclamo) {
                 total++;
                 sb.append("- ").append(s.getTitulo())
-                        .append(" [").append(s.getEstado() != null ? s.getEstado().getNombre() : "?").append("]\n");
+                        .append(" [").append(s.getEstado() != null ? s.getEstado().getNombre() : "?").append("]")
+                        .append(" | categoría=").append(s.getCategoria() != null ? s.getCategoria() : "-")
+                        .append(" | prioridad=").append(s.getPrioridad() != null ? s.getPrioridad() : "-")
+                        .append("\n");
             }
         }
         return "Total de reclamos: " + total + "\n" + sb;
@@ -92,7 +95,10 @@ public class GestorReportes {
             String actor = a.getActor() != null ? a.getActor().getNombreCompleto() : "?";
             sb.append("- ").append(actor)
                     .append(a.isPermitido() ? " (permitido)" : " (denegado)")
-                    .append(" ingreso=").append(a.getFechaHoraIngreso()).append("\n");
+                    .append(" | tipo=").append(a.getTipo() != null ? a.getTipo() : "-")
+                    .append(" | ingreso=").append(a.getFechaHoraIngreso())
+                    .append(" | egreso=").append(a.getFechaHoraEgreso() != null ? a.getFechaHoraEgreso() : "(sin egreso)")
+                    .append("\n");
         }
         return "Total de accesos: " + total + "\n" + sb;
     }

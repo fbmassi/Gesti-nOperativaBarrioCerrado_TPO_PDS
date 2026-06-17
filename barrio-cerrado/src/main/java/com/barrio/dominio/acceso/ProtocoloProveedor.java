@@ -13,7 +13,6 @@ public class ProtocoloProveedor implements ProtocoloAcceso {
 
     @Override
     public boolean validar(Persona actor) {
-        // El protocolo de proveedor solo admite proveedores registrados.
-        return actor instanceof Proveedor;
+        return actor instanceof Proveedor && actor.isAccesoAutorizado();
     }
 }

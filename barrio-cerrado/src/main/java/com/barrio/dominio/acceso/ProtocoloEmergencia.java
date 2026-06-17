@@ -12,7 +12,7 @@ public class ProtocoloEmergencia implements ProtocoloAcceso {
 
     @Override
     public boolean validar(Persona actor) {
-        // El acceso de emergencia siempre se permite, sin importar el tipo de actor.
-        return true;
+        // El guardia dio de alta la emergencia (acceso vigente); se permite el ingreso.
+        return actor != null && actor.isAccesoAutorizado();
     }
 }
