@@ -13,5 +13,11 @@ public class PersonaDTO {
     private String apellido;
     private String dni;
     private String email;
+    private String password;
     private String tipo;
+    private int numeroLote;
+    private String especialidad;
+    private String legajo;
+    private String canalNotificacion;
+    private boolean accesoAutorizado;
 }

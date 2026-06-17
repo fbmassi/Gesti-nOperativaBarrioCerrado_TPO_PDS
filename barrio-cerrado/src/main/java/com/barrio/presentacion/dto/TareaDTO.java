@@ -13,4 +13,5 @@ public class TareaDTO {
     private String descripcion;
     private String estado;
     private String tipo;
+    private String dniProveedor;
 }
