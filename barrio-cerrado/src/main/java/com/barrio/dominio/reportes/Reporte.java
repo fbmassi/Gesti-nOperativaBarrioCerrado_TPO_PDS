@@ -16,6 +16,7 @@ public abstract class Reporte {
 
     private String titulo;
     private LocalDateTime fechaGeneracion;
+    private String contenido;
 
     public abstract String generar();
 }

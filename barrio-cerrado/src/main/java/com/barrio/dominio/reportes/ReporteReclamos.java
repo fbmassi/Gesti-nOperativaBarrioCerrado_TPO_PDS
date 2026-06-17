@@ -7,6 +7,9 @@ public class ReporteReclamos extends Reporte {
 
     @Override
     public String generar() {
-        return null;
+        return "===== " + getTitulo() + " =====\n"
+                + "Tipo: Reclamos\n"
+                + "Generado: " + getFechaGeneracion() + "\n"
+                + (getContenido() != null ? getContenido() : "(sin datos)");
     }
 }
