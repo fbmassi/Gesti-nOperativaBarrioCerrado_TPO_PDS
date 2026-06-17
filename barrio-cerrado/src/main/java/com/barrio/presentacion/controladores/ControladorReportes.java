@@ -1,21 +1,24 @@
 package com.barrio.presentacion.controladores;
 
 import com.barrio.aplicacion.gestores.GestorReportes;
+import com.barrio.dominio.reportes.Reporte;
 import com.barrio.presentacion.dto.ReporteDTO;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class ControladorReportes {
 
-    private GestorReportes gestor;
+    private final GestorReportes gestor;
+
+    public ControladorReportes(GestorReportes gestor) {
+        this.gestor = gestor;
+    }
 
     public ReporteDTO generarReporte(String tipo) {
-        return null;
+        Reporte reporte = gestor.generarReporte(tipo);
+        ReporteDTO dto = new ReporteDTO();
+        dto.setTipo(tipo);
+        dto.setContenido(reporte.generar());
+        dto.setFechaGeneracion(reporte.getFechaGeneracion() != null
+                ? reporte.getFechaGeneracion().toString() : null);
+        return dto;
     }
 }

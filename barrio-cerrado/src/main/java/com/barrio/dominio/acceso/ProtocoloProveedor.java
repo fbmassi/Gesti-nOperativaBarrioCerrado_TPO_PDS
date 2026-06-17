@@ -1,6 +1,7 @@
 package com.barrio.dominio.acceso;
 
 import com.barrio.dominio.personas.Persona;
+import com.barrio.dominio.personas.Proveedor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,6 +13,6 @@ public class ProtocoloProveedor implements ProtocoloAcceso {
 
     @Override
     public boolean validar(Persona actor) {
-        return false;
+        return actor instanceof Proveedor && actor.isAccesoAutorizado();
     }
 }

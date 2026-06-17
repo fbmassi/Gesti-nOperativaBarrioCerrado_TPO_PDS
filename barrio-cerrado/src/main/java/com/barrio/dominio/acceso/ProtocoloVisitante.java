@@ -1,16 +1,14 @@
 package com.barrio.dominio.acceso;
 
 import com.barrio.dominio.personas.Persona;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
+/**
+ * Protocolo para visitantes: se permite si el admin autorizó su ingreso (acceso vigente).
+ */
 public class ProtocoloVisitante implements ProtocoloAcceso {
+
     @Override
     public boolean validar(Persona actor) {
-        return false;
+        return actor != null && actor.isAccesoAutorizado();
     }
 }
