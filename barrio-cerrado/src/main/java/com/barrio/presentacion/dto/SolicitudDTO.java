@@ -12,4 +12,7 @@ public class SolicitudDTO {
     private String categoria;
     private String prioridad;
     private String dniResidente;
+    // Sólo para incidentes de seguridad (los reporta un guardia)
+    private String dniGuardia;
+    private boolean urgencia;
 }
