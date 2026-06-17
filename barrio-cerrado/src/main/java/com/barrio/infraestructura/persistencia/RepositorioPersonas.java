@@ -15,8 +15,6 @@ import com.barrio.dominio.personas.Guardia;
 import com.barrio.dominio.personas.Persona;
 import com.barrio.dominio.personas.Proveedor;
 import com.barrio.dominio.personas.Residente;
-import com.barrio.dominio.personas.Emergencia;
-import com.barrio.dominio.personas.Familiar;
 import com.barrio.dominio.personas.Visitante;
 import com.barrio.infraestructura.bd.ConexionH2;
 
@@ -48,24 +46,6 @@ public class RepositorioPersonas implements Repositorio<Persona> {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error al buscar persona por ID", e);
-        } finally {
-            ConexionH2.liberarConexion(conn);
-        }
-    }
-
-    /** Actualiza solo el canal de notificación preferido de una persona. */
-    public void actualizarCanal(Long id, String canal) {
-        String sql = "UPDATE PERSONAS SET CANAL_NOTIFICACION = ? WHERE ID = ?";
-        Connection conn = null;
-        try {
-            conn = ConexionH2.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, canal);
-                ps.setLong(2, id);
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al actualizar el canal de notificación", e);
         } finally {
             ConexionH2.liberarConexion(conn);
         }
@@ -135,7 +115,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
 
     private void insertar(Persona entidad) {
         String sql = "INSERT INTO PERSONAS (TIPO, NOMBRE, APELLIDO, DNI, EMAIL, PASSWORD, "
-                + "NUMERO_LOTE, LEGAJO, ESPECIALIDAD, ACCESO_AUTORIZADO) "
+                + "NUMERO_LOTE, LEGAJO, ESPECIALIDAD, RESIDENTE_AUTORIZANTE_ID) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Connection conn = null;
         try {
@@ -158,7 +138,7 @@ public class RepositorioPersonas implements Repositorio<Persona> {
 
     private void actualizar(Persona entidad) {
         String sql = "UPDATE PERSONAS SET TIPO=?, NOMBRE=?, APELLIDO=?, DNI=?, EMAIL=?, PASSWORD=?, "
-                + "NUMERO_LOTE=?, LEGAJO=?, ESPECIALIDAD=?, ACCESO_AUTORIZADO=? "
+                + "NUMERO_LOTE=?, LEGAJO=?, ESPECIALIDAD=?, RESIDENTE_AUTORIZANTE_ID=? "
                 + "WHERE ID=?";
         Connection conn = null;
         try {
@@ -203,7 +183,16 @@ public class RepositorioPersonas implements Repositorio<Persona> {
             ps.setNull(9, Types.VARCHAR);
         }
 
-        ps.setBoolean(10, entidad.isAccesoAutorizado());
+        if (entidad instanceof Visitante) {
+            Residente autorizante = ((Visitante) entidad).getResidenteAutorizante();
+            if (autorizante != null && autorizante.getId() != null) {
+                ps.setLong(10, autorizante.getId());
+            } else {
+                ps.setNull(10, Types.BIGINT);
+            }
+        } else {
+            ps.setNull(10, Types.BIGINT);
+        }
     }
 
     private String obtenerTipo(Persona entidad) {
@@ -212,8 +201,6 @@ public class RepositorioPersonas implements Repositorio<Persona> {
         if (entidad instanceof Guardia) return "GUARDIA";
         if (entidad instanceof Proveedor) return "PROVEEDOR";
         if (entidad instanceof Visitante) return "VISITANTE";
-        if (entidad instanceof Familiar) return "FAMILIAR";
-        if (entidad instanceof Emergencia) return "EMERGENCIA";
         throw new IllegalArgumentException("Tipo de persona desconocido: " + entidad.getClass());
     }
 
@@ -235,13 +222,10 @@ public class RepositorioPersonas implements Repositorio<Persona> {
                 persona = new Proveedor(EspecialidadProveedor.desde(rs.getString("ESPECIALIDAD")));
                 break;
             case "VISITANTE":
-                persona = new Visitante();
-                break;
-            case "FAMILIAR":
-                persona = new Familiar();
-                break;
-            case "EMERGENCIA":
-                persona = new Emergencia();
+                long autId = rs.getLong("RESIDENTE_AUTORIZANTE_ID");
+                Residente autorizante = rs.wasNull() ? null
+                        : (Residente) buscarPorId(autId);
+                persona = new Visitante(autorizante);
                 break;
             default:
                 throw new SQLException("Tipo de persona desconocido en BD: " + tipo);
@@ -253,9 +237,6 @@ public class RepositorioPersonas implements Repositorio<Persona> {
         persona.setDni(rs.getString("DNI"));
         persona.setEmail(rs.getString("EMAIL"));
         persona.setPassword(rs.getString("PASSWORD"));
-        String canal = rs.getString("CANAL_NOTIFICACION");
-        persona.setCanalNotificacion(canal != null ? canal : "EMAIL");
-        persona.setAccesoAutorizado(rs.getBoolean("ACCESO_AUTORIZADO"));
         return persona;
     }
 }

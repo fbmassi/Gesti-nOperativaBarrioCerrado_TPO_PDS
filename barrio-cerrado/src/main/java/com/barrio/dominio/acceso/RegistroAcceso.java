@@ -16,9 +16,9 @@ public class RegistroAcceso {
 
     private Long id;
     private Persona actor;
-    private TipoAcceso tipo;
     private LocalDateTime fechaHoraIngreso;
     private LocalDateTime fechaHoraEgreso;
+    private ProtocoloAcceso protocolo;
     private boolean permitido;
 
     public void registrarEgreso() {
