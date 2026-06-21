@@ -17,8 +17,11 @@ public class TareaSimple extends TareaDeMantenimiento {
 
     @Override
     public void cambiarEstado(EstadoTarea nuevoEstado) {
+        // Hoja del Composite: cambia su propio estado y notifica.
+        super.cambiarEstado(nuevoEstado);
     }
 
     public void asignarPersonal(Proveedor p) {
+        this.personalAsignado = p;
     }
 }

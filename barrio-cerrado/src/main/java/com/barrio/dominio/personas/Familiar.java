@@ -3,9 +3,9 @@ package com.barrio.dominio.personas;
 import lombok.NoArgsConstructor;
 
 /**
- * Visitante ocasional. Se da de alta al autorizar su ingreso;
+ * Familiar de un residente. Se da de alta al autorizar su ingreso;
  * su acceso es válido hasta que egresa.
  */
 @NoArgsConstructor
-public class Visitante extends Persona {
+public class Familiar extends Persona {
 }

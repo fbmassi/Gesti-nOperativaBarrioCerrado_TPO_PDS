@@ -11,5 +11,8 @@ public class CanalSMS implements EstrategiaNotificacion {
 
     @Override
     public void enviar(Notificacion n) {
+        String destino = (n.getDestinatario() != null)
+                ? n.getDestinatario().getNombreCompleto() : "desconocido";
+        System.out.println("[SMS] Para: " + destino + " | " + n.getMensaje());
     }
 }

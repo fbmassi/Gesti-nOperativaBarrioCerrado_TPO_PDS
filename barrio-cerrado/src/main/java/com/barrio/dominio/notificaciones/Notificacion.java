@@ -20,6 +20,16 @@ public class Notificacion {
     private LocalDateTime fechaEnvio;
     private EstrategiaNotificacion canal;
 
+    /**
+     * Patrón Strategy: delega el envío en el canal configurado.
+     */
     public void enviar() {
+        if (canal == null) {
+            throw new IllegalStateException("La notificación no tiene un canal asignado");
+        }
+        if (fechaEnvio == null) {
+            fechaEnvio = LocalDateTime.now();
+        }
+        canal.enviar(this);
     }
 }

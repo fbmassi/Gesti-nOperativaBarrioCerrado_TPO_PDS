@@ -11,7 +11,8 @@ public class Resuelto implements EstadoSolicitud {
 
     @Override
     public boolean puedeTransicionarA(EstadoSolicitud destino) {
-        return false;
+        // Resuelto puede cerrarse o reabrirse (volver a En Proceso).
+        return destino instanceof Cerrado || destino instanceof EnProceso;
     }
 
     @Override

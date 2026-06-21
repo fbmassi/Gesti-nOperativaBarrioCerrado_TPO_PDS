@@ -10,12 +10,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.barrio.dominio.acceso.ProtocoloAcceso;
-import com.barrio.dominio.acceso.ProtocoloEmergencia;
-import com.barrio.dominio.acceso.ProtocoloFamiliar;
-import com.barrio.dominio.acceso.ProtocoloProveedor;
-import com.barrio.dominio.acceso.ProtocoloVisitante;
 import com.barrio.dominio.acceso.RegistroAcceso;
+import com.barrio.dominio.acceso.TipoAcceso;
 import com.barrio.dominio.personas.Persona;
 import com.barrio.infraestructura.bd.ConexionH2;
 
@@ -34,29 +30,19 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
 
     @Override
     public RegistroAcceso buscarPorId(Long id) {
-        String sql = "SELECT * FROM ACCESOS WHERE ID = ?";
-        Connection conn = null;
-        try {
-            conn = ConexionH2.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setLong(1, id);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return mapearAcceso(rs);
-                    }
-                    return null;
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al buscar acceso por ID", e);
-        } finally {
-            ConexionH2.liberarConexion(conn);
-        }
+        return buscarUno("SELECT * FROM ACCESOS WHERE ID = ?", ps -> ps.setLong(1, id));
+    }
+
+    /** Último ingreso de la persona que todavía no tiene egreso registrado. */
+    public RegistroAcceso buscarAbiertoPorActor(String dni) {
+        String sql = "SELECT a.* FROM ACCESOS a JOIN PERSONAS p ON a.ACTOR_ID = p.ID "
+                + "WHERE p.DNI = ? AND a.FECHA_HORA_EGRESO IS NULL AND a.PERMITIDO = TRUE ORDER BY a.ID DESC";
+        return buscarUno(sql, ps -> ps.setString(1, dni));
     }
 
     @Override
     public List<RegistroAcceso> buscarTodos() {
-        String sql = "SELECT * FROM ACCESOS";
+        String sql = "SELECT * FROM ACCESOS ORDER BY ID";
         Connection conn = null;
         try {
             conn = ConexionH2.getConnection();
@@ -77,11 +63,10 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
 
     @Override
     public void eliminar(Long id) {
-        String sql = "DELETE FROM ACCESOS WHERE ID = ?";
         Connection conn = null;
         try {
             conn = ConexionH2.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM ACCESOS WHERE ID = ?")) {
                 ps.setLong(1, id);
                 ps.executeUpdate();
             }
@@ -93,7 +78,7 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
     }
 
     private void insertar(RegistroAcceso entidad) {
-        String sql = "INSERT INTO ACCESOS (ACTOR_ID, FECHA_HORA_INGRESO, FECHA_HORA_EGRESO, PROTOCOLO, PERMITIDO) "
+        String sql = "INSERT INTO ACCESOS (ACTOR_ID, TIPO, FECHA_HORA_INGRESO, FECHA_HORA_EGRESO, PERMITIDO) "
                 + "VALUES (?, ?, ?, ?, ?)";
         Connection conn = null;
         try {
@@ -115,7 +100,7 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
     }
 
     private void actualizar(RegistroAcceso entidad) {
-        String sql = "UPDATE ACCESOS SET ACTOR_ID=?, FECHA_HORA_INGRESO=?, FECHA_HORA_EGRESO=?, PROTOCOLO=?, PERMITIDO=? "
+        String sql = "UPDATE ACCESOS SET ACTOR_ID=?, TIPO=?, FECHA_HORA_INGRESO=?, FECHA_HORA_EGRESO=?, PERMITIDO=? "
                 + "WHERE ID=?";
         Connection conn = null;
         try {
@@ -138,49 +123,47 @@ public class RepositorioAccesos implements Repositorio<RegistroAcceso> {
         } else {
             ps.setNull(1, Types.BIGINT);
         }
-
-        ps.setTimestamp(2, entidad.getFechaHoraIngreso() != null
+        ps.setString(2, entidad.getTipo() != null ? entidad.getTipo().name() : TipoAcceso.VISITANTE.name());
+        ps.setTimestamp(3, entidad.getFechaHoraIngreso() != null
                 ? Timestamp.valueOf(entidad.getFechaHoraIngreso()) : null);
-        ps.setTimestamp(3, entidad.getFechaHoraEgreso() != null
+        ps.setTimestamp(4, entidad.getFechaHoraEgreso() != null
                 ? Timestamp.valueOf(entidad.getFechaHoraEgreso()) : null);
-        ps.setString(4, protocoloAString(entidad.getProtocolo()));
         ps.setBoolean(5, entidad.isPermitido());
     }
 
     private RegistroAcceso mapearAcceso(ResultSet rs) throws SQLException {
         long actorId = rs.getLong("ACTOR_ID");
-        Persona actor = rs.wasNull() ? null
-                : repoPersonas.buscarPorId(actorId);
-
+        Persona actor = rs.wasNull() ? null : repoPersonas.buscarPorId(actorId);
         Timestamp tsIngreso = rs.getTimestamp("FECHA_HORA_INGRESO");
         Timestamp tsEgreso = rs.getTimestamp("FECHA_HORA_EGRESO");
-
-        RegistroAcceso acceso = new RegistroAcceso(
+        return new RegistroAcceso(
                 rs.getLong("ID"),
                 actor,
+                TipoAcceso.valueOf(rs.getString("TIPO")),
                 tsIngreso != null ? tsIngreso.toLocalDateTime() : null,
                 tsEgreso != null ? tsEgreso.toLocalDateTime() : null,
-                stringAProtocolo(rs.getString("PROTOCOLO")),
                 rs.getBoolean("PERMITIDO")
         );
-        return acceso;
     }
 
-    private String protocoloAString(ProtocoloAcceso protocolo) {
-        if (protocolo instanceof ProtocoloFamiliar) return "FAMILIAR";
-        if (protocolo instanceof ProtocoloVisitante) return "VISITANTE";
-        if (protocolo instanceof ProtocoloProveedor) return "PROVEEDOR";
-        if (protocolo instanceof ProtocoloEmergencia) return "EMERGENCIA";
-        return "VISITANTE";
+    private interface Setter {
+        void set(PreparedStatement ps) throws SQLException;
     }
 
-    private ProtocoloAcceso stringAProtocolo(String protocolo) {
-        if (protocolo == null) return new ProtocoloVisitante();
-        switch (protocolo) {
-            case "FAMILIAR":    return new ProtocoloFamiliar();
-            case "PROVEEDOR":   return new ProtocoloProveedor();
-            case "EMERGENCIA":  return new ProtocoloEmergencia();
-            default:            return new ProtocoloVisitante();
+    private RegistroAcceso buscarUno(String sql, Setter setter) {
+        Connection conn = null;
+        try {
+            conn = ConexionH2.getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                setter.set(ps);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? mapearAcceso(rs) : null;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al buscar acceso", e);
+        } finally {
+            ConexionH2.liberarConexion(conn);
         }
     }
 }

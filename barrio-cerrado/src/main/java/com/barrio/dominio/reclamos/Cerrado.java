@@ -11,6 +11,7 @@ public class Cerrado implements EstadoSolicitud {
 
     @Override
     public boolean puedeTransicionarA(EstadoSolicitud destino) {
+        // Cerrado es un estado terminal: no admite transiciones.
         return false;
     }
 

@@ -11,7 +11,8 @@ public class Pendiente implements EstadoSolicitud {
 
     @Override
     public boolean puedeTransicionarA(EstadoSolicitud destino) {
-        return false;
+        // Pendiente puede pasar a En Proceso o cerrarse directamente.
+        return destino instanceof EnProceso || destino instanceof Cerrado;
     }
 
     @Override

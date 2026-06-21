@@ -14,5 +14,5 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Proveedor extends Persona {
-    private String especialidad;
+    private EspecialidadProveedor especialidad;
 }
