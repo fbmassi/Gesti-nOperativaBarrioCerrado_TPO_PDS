@@ -21,6 +21,10 @@ public abstract class Persona {
     private String dni;
     private String email;
     private String password;
+    /** Medio por el que la persona quiere recibir notificaciones: "EMAIL" o "SMS". */
+    private String canalNotificacion = "EMAIL";
+    /** Indica si la persona tiene el ingreso al barrio autorizado en este momento. */
+    private boolean accesoAutorizado;
 
     public String getNombreCompleto() {
         return nombre + " " + apellido;
